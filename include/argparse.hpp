@@ -17,33 +17,101 @@
 #include <iomanip>
 #include <sstream>
 
+
+
+struct invalid_input : std::exception
+{
+private:
+    std::string message;
+public:
+    explicit invalid_input(const std::string& msg) : message{msg + ". Type -h or --help for help"} {}
+    const char* what() const noexcept override {return (message).c_str() ;}
+};
+
 class Argparse
 {
-    // TODO: ADD SUPPORT FOR EQUAL
-    // TODO: ADD BETTER ERROR HANDLING
-    // TODO: ADD HELP
-    // TODO: ADD HIERACHY
 private:
-    class invalid_input : std::exception
-    {
-    private:
-        std::string message;
-    public:
-        explicit invalid_input(std::string& msg) : message{msg} {}
-        const char* what() const noexcept override {return (message + " is invalid! Type -h or --help for help.").c_str();}
-    };
-
-    std::unordered_map<std::string, std::pair<std::string, bool>> argsMap;
+    std::unordered_map<std::string, std::tuple<std::string, bool, std::string>> argsMap;
     std::vector<std::pair<std::string, std::string>> argsRel;
-    std::unordered_map<std::string, bool> settingsMap {{"colors", false}, {"help", true}, {"version", true}};
+    std::unordered_map<std::string, bool> settingsMap {{"colors", false}, {"help", true}, {"auto_help", false}, {"version", true}, {"error_msg", true}};
     std::unordered_map<std::string, std::string> configMap{{"description", ""}, {"path", ""}, {"version", "1.0.0"}};
     std::unordered_map<std::string, std::string> parsed;
+
+
+protected:
+    void error_message(const std::string& message)
+    {
+        if (settingsMap["error_msg"])
+            throw invalid_input(message);
+    }
+
+    void arguments_printer(const std::vector<std::pair<std::string, std::string>>& container, int depth = 0)
+    {
+        std::vector<std::pair<std::string, std::string>> lCont;
+        std::vector<std::pair<std::string, std::string>> rCont;
+        std::partition_copy(container.begin(), container.end(), std::back_inserter(lCont), std::back_inserter(rCont), [this](const std::pair<std::string, std::string>& in){
+            return std::get<1>(argsMap[in.second]) && std::get<2>(argsMap[in.second]).empty();
+        });
+
+        auto print = [this, &depth](const std::pair<std::string, std::string>& argPair){
+            std::clog << std::setw(5 * depth)<< "" << std::setw(10) << argPair.first << std::setw(20) << argPair.second << std::setw(20) << std::get<0>(argsMap[argPair.second]) << '\n';
+        };
+        if (!lCont.empty())
+        {
+            std::clog << std::setw(5 * depth) << "" << "[Required]\n";
+            for (const auto& v : lCont)
+            {
+                print(v);
+                decltype(rCont.begin()) p;
+                std::vector<std::pair<std::string, std::string>> dumpCont;
+                if ((p = std::find_if(rCont.begin(), rCont.end(), [this, &v](const std::pair<std::string, std::string>& in){return !std::get<2>(argsMap[in.second]).empty() ? getRelMod(std::get<2>(argsMap[in.second])) == v.second : false;})) != rCont.end())
+                {
+                    dumpCont.emplace_back(*p);
+                    rCont.erase(p);
+                }
+                arguments_printer(dumpCont, depth + 1);
+            }
+        }
+        if (!rCont.empty())
+        {
+            std::clog << std::setw(5 * depth) << "" << "[Optional]\n";
+            for (const auto& v : rCont)
+            {
+                print(v);
+                decltype(lCont.begin()) p;
+                std::vector<std::pair<std::string, std::string>> dumpCont;
+                if ((p = std::find_if(lCont.begin(), lCont.end(), [this, &v](const std::pair<std::string, std::string>& in){ return !std::get<2>(argsMap[in.second]).empty() ? getRelMod(std::get<2>(argsMap[in.second])) == v.second : false;})) != lCont.end())
+                {
+                    dumpCont.emplace_back(*p);
+                    lCont.erase(p);
+                }
+                arguments_printer(dumpCont, depth + 1);
+            }
+        }
+    }
+
+    std::string getRel(const std::string& value)
+    {
+        auto g = std::find_if(argsRel.begin(), argsRel.end(), [&value](std::pair<std::string, std::string>& elements){
+            return (elements.first == value || elements.second == value);
+        });
+        return g == argsRel.end()? "" : g->second;
+    }
+
+    std::string getRelMod(const std::string& value)
+    {
+        auto g = std::find_if(argsRel.begin(), argsRel.end(), [&value](std::pair<std::string, std::string>& elements){
+            return (elements.first == "-"+value || elements.second == "--"+value);
+        });
+        return g == argsRel.end() ? "" : g->second;
+    }
+
 
 public:
     explicit Argparse(const std::string& desc) { configMap["description"] = desc;}
     Argparse(int argc, char** argv) { parse(argc, argv); }
     Argparse(const std::string& desc, int argc, char** argv) : Argparse(argc, argv) { configMap["description"] = desc;};
-    void settings(std::vector<std::pair<std::string, bool>>& values)
+    void settings(const std::vector<std::pair<std::string, bool>>& values)
     {
         for (const auto& value : values){
             if (settingsMap.find(value.first) != settingsMap.end()) {
@@ -53,7 +121,7 @@ public:
             }
         }
     }
-    void configuration(std::vector<std::pair<std::string, std::string>>& values)
+    void configuration(const std::vector<std::pair<std::string, std::string>>& values)
     {
         for (const auto& value : values){
             if (configMap.find(value.first) != configMap.end()){
@@ -83,34 +151,100 @@ public:
         };
         std::stringstream ss;
         argv++;
+
+        auto cutArg = [](char* value) -> char* {
+            while (*value)
+            {
+                if (*value == '='){
+                    *value = 0;
+                    return value + 1;
+                }
+                ++value;
+            }
+            return nullptr;
+        };
+        const char* value;
+
         while (*argv) {
             if (isFlag(*argv)){
-                flag = *argv;
-                argv++;
-                parsed[(getRel(flag))] = {};
-                do {
-                    if (!*argv){
-                        break;
+                if (getRel(*argv).empty())
+                {
+                    error_message(*argv + std::string(" is an invalid input"));
+                    return;
+                }
+                if ((value = cutArg(*argv))){
+                 flag = *argv;
+                 parsed[(getRel(flag))] += value;
+                 parsed[(getRel(flag))] += " ";
+                 ++argv;
+                } else{
+                    flag = *argv;
+                    parsed[(getRel(flag))] = {};
+                    ++argv;
+                    while (*argv && !isFlag(*argv)) {
+                        parsed[getRel(flag)] += *argv;
+                        parsed[getRel(flag)] += " ";
+                        ++argv;
                     }
-                    parsed[getRel(flag)] += *argv;
-                    argv++;
-                    parsed[getRel(flag)] += " ";
-                } while (*argv && !isFlag(*argv));
+                }
             } else {
                 ++argv;
             }
         }
+
+        for (auto& arg : argsMap)
+        {
+            if (!parsed.empty() && !std::get<2>(arg.second).empty() && parsed.find(arg.first) != parsed.end() && (getRelMod(std::get<2>(arg.second)).empty() ||parsed.find(getRelMod(std::get<2>(arg.second))) == parsed.end()))
+            {
+                error_message(std::string(arg.first) + " requires: " + getRelMod(std::get<2>(arg.second)));
+            }
+            if (!parsed.empty() && std::get<1>(arg.second) && (getRelMod(std::get<2>(arg.second)).empty() || parsed.find(getRelMod(std::get<2>(arg.second))) != parsed.end()) && parsed.find(arg.first) == parsed.end())
+            {
+                error_message("Missing required argument: " + std::string(arg.first));
+            }
+        }
+
+        if (argc == 1 && settingsMap["auto_help"]){
+            help();
+        }
+
     }
+
     void help()
     {
         if (!configMap["description"].empty())
             std::clog << configMap["description"] << '\n';
-        std::clog << "Usage: " << configMap["path"] << '\n';
-        std::clog.setf(std::ios::left);
-        for (const auto& arg : argsRel){
-            std::clog << std::setw(10) <<  arg.first << std::setw(20) << arg.second << std::setw(20) << argsMap[arg.second].first << std::setw(20) << (argsMap[arg.second].second? "Required" : "Optional") << '\n';
+        std::clog << "Usage: " << configMap["path"] << " ";
+        uint32_t someCounter{};
+
+        for (const auto& arg : argsMap)
+        {
+            if (std::get<1>(arg.second)){
+                if ( std::get<2>(arg.second).empty()){
+                    auto q = std::find_if(argsRel.begin(), argsRel.end(), [&arg](const std::pair<std::string, std::string>& argsPair){
+                        return arg.first == argsPair.first || arg.first == argsPair.second;
+                    });
+                    std::clog << "["<< (q->first.empty() ? q->second : q->first) << "] ";
+                }
+                ++someCounter;
+            }
         }
+        if (someCounter < argsMap.size())
+        {
+            std::clog << "[options] ";
+        }
+        std::clog << '\n';
+        std::clog.setf(std::ios::left);
+        arguments_printer(argsRel, 0);
+        std::clog.unsetf(std::ios::left);
     }
+
+    bool isHelp()
+    {
+        return parsed.size() == 1 && parsed.find("--help") != parsed.end();
+    }
+
+
     void add_argument(const std::string& arg, const std::string& long_arg, const std::string& desc, bool required = false, const std::string& parent = "")
     {
         if (desc.empty())
@@ -120,8 +254,7 @@ public:
         if (long_arg[0] != '-' && long_arg[1] != '-')
             throw std::invalid_argument(R"(Long arguments start with '--')");
         argsRel.emplace_back(arg, long_arg);
-
-        argsMap[long_arg] = {desc, required}; // TODO: Change to tuple and add parent
+        argsMap[long_arg] = {desc, required, parent};
     }
     void add_argument(const std::string& long_arg, const std::string& desc, bool required = false, const std::string& parent = "")
     {
@@ -139,7 +272,8 @@ public:
     }
 
     template <typename T>
-    std::vector<T> getv(const std::string& value) {
+    std::vector<T> getv(const std::string& value)
+    {
         std::stringstream ss;
         ss << parsed[getRelMod(value)];
         std::vector<T> dump;
@@ -152,22 +286,6 @@ public:
             dump.emplace_back(toResend);
         }
         return dump;
-    }
-
-    std::string getRel(const std::string& value)
-    {
-        auto g = std::find_if(argsRel.begin(), argsRel.end(), [&value](std::pair<std::string, std::string>& elements){
-            return (elements.first == value || elements.second == value);
-        });
-        return g->second;
-    }
-
-    std::string getRelMod(const std::string& value)
-    {
-        auto g = std::find_if(argsRel.begin(), argsRel.end(), [&value](std::pair<std::string, std::string>& elements){
-            return (elements.first == "-"+value || elements.second == "--"+value);
-        });
-        return g->second;
     }
 };
 
