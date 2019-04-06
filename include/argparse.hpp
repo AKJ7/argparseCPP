@@ -191,16 +191,18 @@ public:
                 ++argv;
             }
         }
-
-        for (auto& arg : argsMap)
+        if (!isHelp() && !isVersion())
         {
-            if (!parsed.empty() && !std::get<2>(arg.second).empty() && parsed.find(arg.first) != parsed.end() && (getRelMod(std::get<2>(arg.second)).empty() ||parsed.find(getRelMod(std::get<2>(arg.second))) == parsed.end()))
+            for (auto& arg : argsMap)
             {
-                error_message(std::string(arg.first) + " requires: " + getRelMod(std::get<2>(arg.second)));
-            }
-            if (!parsed.empty() && std::get<1>(arg.second) && (getRelMod(std::get<2>(arg.second)).empty() || parsed.find(getRelMod(std::get<2>(arg.second))) != parsed.end()) && parsed.find(arg.first) == parsed.end())
-            {
-                error_message("Missing required argument: " + std::string(arg.first));
+                if (!parsed.empty() && !std::get<2>(arg.second).empty() && parsed.find(arg.first) != parsed.end() && (getRelMod(std::get<2>(arg.second)).empty() ||parsed.find(getRelMod(std::get<2>(arg.second))) == parsed.end()))
+                {
+                    error_message(std::string(arg.first) + " requires: " + getRelMod(std::get<2>(arg.second)));
+                }
+                if (!parsed.empty() && std::get<1>(arg.second) && (getRelMod(std::get<2>(arg.second)).empty() || parsed.find(getRelMod(std::get<2>(arg.second))) != parsed.end()) && parsed.find(arg.first) == parsed.end())
+                {
+                    error_message("Missing required argument: " + std::string(arg.first));
+                }
             }
         }
 
@@ -242,6 +244,11 @@ public:
     bool isHelp()
     {
         return parsed.size() == 1 && parsed.find("--help") != parsed.end();
+    }
+
+    bool isVersion()
+    {
+        return parsed.size() == 1 && parsed.find("--version") != parsed.end();
     }
 
 

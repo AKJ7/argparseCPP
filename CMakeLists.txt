@@ -10,12 +10,7 @@ add_executable(unitTest test/test.cpp)
 include_directories(unitTest include)
 
 macro(add_arg)
-    foreach(argu IN ITEMS ${ARGN})
-        message(STATUS "${argu}\n")
-    endforeach()
     add_test(UnitTest unitTest ${ARGN})
 endmacro()
 
 add_arg(-r --cook rice -e chicken beans -c well -d 1 2 3)
-
-#add_test(NAME UnitTest COMMAND unitTest)
