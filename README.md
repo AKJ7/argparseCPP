@@ -98,13 +98,13 @@ The console ouput when not parameter is given:
 ### Configuration and Settings:  
 Configurations and Settings can be changed before calling the `parse` function, with  
 ```C++
-    argeparse.configuration({
+    argparse.configuration({
         {"path", "myNewPath"},
         {"version", "15.06"},
         {"description", "new Description"}
     });
     
-    argeparse.settings({
+    argparse.settings({
         {"colors", false},                          // Allow colors (soon)
         {"help", true},                             // Allow to show help in the help menu
         {"auto_help", false},                       // Allow automatic help when no arguments are given
