@@ -1,24 +1,29 @@
-//  Copyright <2019> <Atchoglo, Komi Jules>
-//
-//  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
-//  following conditions are met:
-//
-//  1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-//        disclaimer.
-//
-//  2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-//        disclaimer in the documentation and/or other materials provided with the distribution.
-//
-//  3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products
-//  derived from this software without specific prior written permission.
-//
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-//        INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-//  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-//        SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-//        STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-//        IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+  /*
+   * Copyright <2019> <Atchoglo, Komi Jules>
+
+  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+  following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+  disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+  disclaimer in the documentation and/or other materials provided with the distribution.
+
+  3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products
+  derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+  INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+   */
+
+#ifndef ARGPARSECPP_ARGPARSE_HPP
+#define ARGPARSECPP_ARGPARSE_HPP
 
 #include <iostream>
 #include <stdexcept>
@@ -48,28 +53,34 @@ class Argparse
 private:
     std::unordered_map<std::string, std::tuple<std::string, bool, std::string>> argsMap;
     std::vector<std::pair<std::string, std::string>> argsRel;
-    std::unordered_map<std::string, bool> settingsMap {{"colors", false}, {"help", true}, {"auto_help", false}, {"version", true}, {"error_msg", true}};
+    std::unordered_map<std::string, bool> settingsMap{{"colors",    false},
+                                                      {"help",      true},
+                                                      {"auto_help", false},
+                                                      {"version",   true},
+                                                      {"error_msg", true}};
     std::unordered_map<std::string, std::string> configMap{{"description", ""}, {"path", ""}, {"version", "1.0.0"}};
     std::unordered_map<std::string, std::string> parsed;
 
 
 protected:
-    void error_message(const std::string& message)
+    inline void error_message(const std::string& message)
     {
         if (settingsMap["error_msg"])
             throw invalid_input(message);
     }
 
-    void arguments_printer(const std::vector<std::pair<std::string, std::string>>& container, int depth = 0)
+    inline void arguments_printer(const std::vector<std::pair<std::string, std::string>>& container, int depth = 0)
     {
         std::vector<std::pair<std::string, std::string>> lCont;
         std::vector<std::pair<std::string, std::string>> rCont;
-        std::partition_copy(container.begin(), container.end(), std::back_inserter(lCont), std::back_inserter(rCont), [this](const std::pair<std::string, std::string>& in){
-            return std::get<1>(argsMap[in.second]) && std::get<2>(argsMap[in.second]).empty();
-        });
+        std::partition_copy(container.begin(), container.end(), std::back_inserter(lCont), std::back_inserter(rCont),
+                            [this](const std::pair<std::string, std::string> &in) {
+                                return std::get<1>(argsMap[in.second]) && std::get<2>(argsMap[in.second]).empty();
+                            });
 
         auto print = [this, &depth](const std::pair<std::string, std::string>& argPair){
-            std::clog << std::setw(5 * depth)<< "" << std::setw(10) << argPair.first << std::setw(20) << argPair.second << std::setw(20) << std::get<0>(argsMap[argPair.second]) << '\n';
+            std::clog << std::setw(5 * depth) << "" << std::setw(10) << argPair.first << std::setw(20) << argPair.second
+                      << std::setw(20) << std::get<0>(argsMap[argPair.second]) << '\n';
         };
         if (!lCont.empty())
         {
@@ -79,8 +90,12 @@ protected:
                 print(v);
                 decltype(rCont.begin()) p;
                 std::vector<std::pair<std::string, std::string>> dumpCont;
-                if ((p = std::find_if(rCont.begin(), rCont.end(), [this, &v](const std::pair<std::string, std::string>& in){return !std::get<2>(argsMap[in.second]).empty() ? getRelMod(std::get<2>(argsMap[in.second])) == v.second : false;})) != rCont.end())
-                {
+                if ((p = std::find_if(rCont.begin(), rCont.end(),
+                                      [this, &v](const std::pair<std::string, std::string> &in) {
+                                          return !std::get<2>(argsMap[in.second]).empty() ?
+                                                 getRelMod(std::get<2>(argsMap[in.second])) == v.second : false;
+                                      })) != rCont.end()) {
+
                     dumpCont.emplace_back(*p);
                     rCont.erase(p);
                 }
@@ -95,8 +110,12 @@ protected:
                 print(v);
                 decltype(lCont.begin()) p;
                 std::vector<std::pair<std::string, std::string>> dumpCont;
-                if ((p = std::find_if(lCont.begin(), lCont.end(), [this, &v](const std::pair<std::string, std::string>& in){ return !std::get<2>(argsMap[in.second]).empty() ? getRelMod(std::get<2>(argsMap[in.second])) == v.second : false;})) != lCont.end())
-                {
+                if ((p = std::find_if(lCont.begin(), lCont.end(),
+                                      [this, &v](const std::pair<std::string, std::string> &in) {
+                                          return !std::get<2>(argsMap[in.second]).empty() ?
+                                                 getRelMod(std::get<2>(argsMap[in.second])) == v.second : false;
+                                      })) != lCont.end()) {
+
                     dumpCont.emplace_back(*p);
                     lCont.erase(p);
                 }
@@ -105,7 +124,7 @@ protected:
         }
     }
 
-    std::string getRel(const std::string& value)
+    inline std::string getRel(const std::string& value)
     {
         auto g = std::find_if(argsRel.begin(), argsRel.end(), [&value](std::pair<std::string, std::string>& elements){
             return (elements.first == value || elements.second == value);
@@ -113,7 +132,7 @@ protected:
         return g == argsRel.end()? "" : g->second;
     }
 
-    std::string getRelMod(const std::string& value)
+    inline std::string getRelMod(const std::string& value)
     {
         auto g = std::find_if(argsRel.begin(), argsRel.end(), [&value](std::pair<std::string, std::string>& elements){
             return (elements.first == "-"+value || elements.second == "--"+value);
@@ -126,7 +145,7 @@ public:
     explicit Argparse(const std::string& desc) { configMap["description"] = desc;}
     Argparse(int argc, char** argv) { parse(argc, argv); }
     Argparse(const std::string& desc, int argc, char** argv) : Argparse(argc, argv) { configMap["description"] = desc;};
-    void settings(const std::vector<std::pair<std::string, bool>>& values)
+    inline void settings(const std::vector<std::pair<std::string, bool>>& values)
     {
         for (const auto& value : values){
             if (settingsMap.find(value.first) != settingsMap.end()) {
@@ -136,7 +155,7 @@ public:
             }
         }
     }
-    void configuration(const std::vector<std::pair<std::string, std::string>>& values)
+    inline void configuration(const std::vector<std::pair<std::string, std::string>>& values)
     {
         for (const auto& value : values){
             if (configMap.find(value.first) != configMap.end()){
@@ -146,7 +165,7 @@ public:
             }
         }
     }
-    void parse(int argc, char** argv)
+    inline void parse(int argc, char** argv)
     {
         if (configMap["path"].empty()){
             auto cleanPath = [](std::string& path) {
@@ -210,12 +229,17 @@ public:
         {
             for (auto& arg : argsMap)
             {
-                if (!parsed.empty() && !std::get<2>(arg.second).empty() && parsed.find(arg.first) != parsed.end() && (getRelMod(std::get<2>(arg.second)).empty() ||parsed.find(getRelMod(std::get<2>(arg.second))) == parsed.end()))
-                {
+                if (!parsed.empty() && !std::get<2>(arg.second).empty() && parsed.find(arg.first) != parsed.end() &&
+                    (getRelMod(std::get<2>(arg.second)).empty() ||
+                     parsed.find(getRelMod(std::get<2>(arg.second))) == parsed.end())) {
+
                     error_message(std::string(arg.first) + " requires: " + getRelMod(std::get<2>(arg.second)));
                 }
-                if (!parsed.empty() && std::get<1>(arg.second) && (getRelMod(std::get<2>(arg.second)).empty() || parsed.find(getRelMod(std::get<2>(arg.second))) != parsed.end()) && parsed.find(arg.first) == parsed.end())
-                {
+                if (!parsed.empty() && std::get<1>(arg.second) && (getRelMod(std::get<2>(arg.second)).empty() ||
+                                                                   parsed.find(getRelMod(std::get<2>(arg.second))) !=
+                                                                   parsed.end()) &&
+                    parsed.find(arg.first) == parsed.end()) {
+
                     error_message("Missing required argument: " + std::string(arg.first));
                 }
             }
@@ -227,7 +251,7 @@ public:
 
     }
 
-    void help()
+    inline void help()
     {
         if (!configMap["description"].empty())
             std::clog << configMap["description"] << '\n';
@@ -256,18 +280,18 @@ public:
         std::clog.unsetf(std::ios::left);
     }
 
-    bool isHelp()
+    inline bool isHelp()
     {
         return parsed.size() == 1 && parsed.find("--help") != parsed.end();
     }
 
-    bool isVersion()
+    inline bool isVersion()
     {
         return parsed.size() == 1 && parsed.find("--version") != parsed.end();
     }
 
 
-    void add_argument(const std::string& arg, const std::string& long_arg, const std::string& desc, bool required = false, const std::string& parent = "")
+    inline void add_argument(const std::string& arg, const std::string& long_arg, const std::string& desc, bool required = false, const std::string& parent = "")
     {
         if (desc.empty())
             throw std::invalid_argument("Empty descriptions are not allowed");
@@ -278,13 +302,13 @@ public:
         argsRel.emplace_back(arg, long_arg);
         argsMap[long_arg] = {desc, required, parent};
     }
-    void add_argument(const std::string& long_arg, const std::string& desc, bool required = false, const std::string& parent = "")
+    inline void add_argument(const std::string& long_arg, const std::string& desc, bool required = false, const std::string& parent = "")
     {
         add_argument("", long_arg, desc, required, parent);
     }
 
     template <typename T>
-    T get(const std::string& value)
+    inline T get(const std::string& value)
     {
         std::stringstream ss;
         ss << parsed[getRelMod(value)];
@@ -294,7 +318,7 @@ public:
     }
 
     template <typename T>
-    std::vector<T> getv(const std::string& value)
+    inline std::vector<T> getv(const std::string& value)
     {
         std::stringstream ss;
         ss << parsed[getRelMod(value)];
@@ -312,7 +336,7 @@ public:
 };
 
 template <>
-bool Argparse::get<bool>(const std::string& value){
+inline bool Argparse::get<bool>(const std::string& value){
     return parsed.find(getRelMod(value)) != parsed.end();
 }
 
