@@ -51,7 +51,7 @@ public:
 class Argparse
 {
 private:
-    std::unordered_map<std::string, std::tuple<std::string, bool, std::string>> argsMap;
+    std::unordered_map<std::string, std::tuple<std::string, bool, std::vector<std::string>>> argsMap;
     std::vector<std::pair<std::string, std::string>> argsRel;
     std::unordered_map<std::string, bool> settingsMap{{"colors",    false},
                                                       {"help",      true},
@@ -92,10 +92,16 @@ protected:
                 std::vector<std::pair<std::string, std::string>> dumpCont;
                 if ((p = std::find_if(rCont.begin(), rCont.end(),
                                       [this, &v](const std::pair<std::string, std::string> &in) {
-                                          return !std::get<2>(argsMap[in.second]).empty() ?
-                                                 getRelMod(std::get<2>(argsMap[in.second])) == v.second : false;
+                                          if (std::get<2>(argsMap[in.second]).empty()){
+                                              return false;
+                                          } else{
+                                              for (const auto& content : std::get<2>(argsMap[in.second]))
+                                              {
+                                                  if (content == v.second) return true;
+                                              }
+                                              return false;
+                                          }
                                       })) != rCont.end()) {
-
                     dumpCont.emplace_back(*p);
                     rCont.erase(p);
                 }
@@ -112,8 +118,15 @@ protected:
                 std::vector<std::pair<std::string, std::string>> dumpCont;
                 if ((p = std::find_if(lCont.begin(), lCont.end(),
                                       [this, &v](const std::pair<std::string, std::string> &in) {
-                                          return !std::get<2>(argsMap[in.second]).empty() ?
-                                                 getRelMod(std::get<2>(argsMap[in.second])) == v.second : false;
+                                          if (std::get<2>(argsMap[in.second]).empty()){
+                                              return false;
+                                          } else{
+                                              for (const auto& content : std::get<2>(argsMap[in.second]))
+                                              {
+                                                  if (content == v.second) return true;
+                                              }
+                                              return false;
+                                          }
                                       })) != lCont.end()) {
 
                     dumpCont.emplace_back(*p);
@@ -155,6 +168,12 @@ public:
             }
         }
     }
+    /// @brief Changes the configuration of the parser.
+    /// @param values A string pair of std::string to configure. The first is the configuration to change and the second
+    /// the configuration value.
+    /// @returns void
+    ///
+    /// Currently, the following configurations can be changed: path, description and the version
     inline void configuration(const std::vector<std::pair<std::string, std::string>>& values)
     {
         for (const auto& value : values){
@@ -165,6 +184,13 @@ public:
             }
         }
     }
+    /// @brief Parses the given arguments from add_arguments and the configurations parameters, by checking the validity
+    /// of the inputed arguments and sets their values ready for the 'get' functions
+    /// @param argc ArgumentsCount
+    /// @param argv ArgumentsValues
+    /// @returns void
+    ///
+    /// The arguments of this function are supposed to originate from the 'main' function of your project
     inline void parse(int argc, char** argv)
     {
         if (configMap["path"].empty()){
@@ -227,20 +253,34 @@ public:
         }
         if (!isHelp() && !isVersion())
         {
+            std::string found{};
             for (auto& arg : argsMap)
             {
                 if (!parsed.empty() && !std::get<2>(arg.second).empty() && parsed.find(arg.first) != parsed.end() &&
-                    (getRelMod(std::get<2>(arg.second)).empty() ||
-                     parsed.find(getRelMod(std::get<2>(arg.second))) == parsed.end())) {
-
-                    error_message(std::string(arg.first) + " requires: " + getRelMod(std::get<2>(arg.second)));
+                    (std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){ if (getRelMod(val).empty() or parsed.find(getRelMod(val)) == parsed.end()) {return true;} else{found = val; return false;} })))
+                {
+                    uint32_t myCounter = 0;
+                    std::stringstream sss;
+                    sss << arg.first << " requires: ";
+                    for (const auto& fl : std::get<2>(arg.second))
+                    {
+                        myCounter++;
+                        sss << getRelMod(fl);
+                        if (myCounter == std::get<2>(arg.second).size() - 1 &&  std::get<2>(arg.second).size() != 1)
+                            sss << " or ";
+                        else if (myCounter == std::get<2>(arg.second).size())
+                            break;
+                        else
+                            sss << ", ";
+                    }
+                    error_message(sss.str());
                 }
-                if (!parsed.empty() && std::get<1>(arg.second) && (getRelMod(std::get<2>(arg.second)).empty() ||
-                                                                   parsed.find(getRelMod(std::get<2>(arg.second))) !=
-                                                                   parsed.end()) &&
-                    parsed.find(arg.first) == parsed.end()) {
-
-                    error_message("Missing required argument: " + std::string(arg.first));
+                if (!parsed.empty() && std::get<1>(arg.second) &&
+                    (std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){ if (getRelMod(val).empty()) {return true;} else {found = val; return false;} })||
+                     !std::none_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val) {return parsed.find(getRelMod(val)) == parsed.end();})) &&
+                     parsed.find(arg.first) == parsed.end())
+                {
+                    error_message("Missing required argument: " + arg.first);
                 }
             }
         }
@@ -250,7 +290,10 @@ public:
         }
 
     }
-
+    /// @brief Creates the help menu
+    /// @returns void
+    ///
+    /// 'std::clog' is used to keep the output from interfering with the standard output stream
     inline void help()
     {
         if (!configMap["description"].empty())
@@ -279,19 +322,23 @@ public:
         arguments_printer(argsRel, 0);
         std::clog.unsetf(std::ios::left);
     }
-
+    /// @brief Checks if the intent of the user is to get the help menu
+    /// @returns True if the help menu is requested, else false
+    ///
+    /// This function checks if the user entered -h or --help and if only one argument was provided by the latter
     inline bool isHelp()
     {
         return parsed.size() == 1 && parsed.find("--help") != parsed.end();
     }
-
+    /// @brief Checks if the intent of the user is to get the version
+    /// @returns True if the version values are requested, else false
+    ///
+    /// This function checks if the user entered -v or --version and if only one argument was provided by the latter
     inline bool isVersion()
     {
         return parsed.size() == 1 && parsed.find("--version") != parsed.end();
     }
-
-
-    inline void add_argument(const std::string& arg, const std::string& long_arg, const std::string& desc, bool required = false, const std::string& parent = "")
+    inline void add_argument(const std::string& arg, const std::string& long_arg, const std::string& desc, bool required = false, const std::vector<std::string>& parents = {})
     {
         if (desc.empty())
             throw std::invalid_argument("Empty descriptions are not allowed");
@@ -300,11 +347,11 @@ public:
         if (long_arg[0] != '-' && long_arg[1] != '-')
             throw std::invalid_argument(R"(Long arguments start with '--')");
         argsRel.emplace_back(arg, long_arg);
-        argsMap[long_arg] = {desc, required, parent};
+        argsMap[long_arg] = {desc, required, parents};
     }
-    inline void add_argument(const std::string& long_arg, const std::string& desc, bool required = false, const std::string& parent = "")
+    inline void add_argument(const std::string& long_arg, const std::string& desc, bool required = false, const std::vector<std::string>& parents = {})
     {
-        add_argument("", long_arg, desc, required, parent);
+        add_argument("", long_arg, desc, required, parents);
     }
 
     template <typename T>

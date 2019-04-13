@@ -31,7 +31,7 @@ then
     $ make --directory=build
 ```  
 ## Usage  
-Examples are much easier to use for explanation. Sooo ...  
+Examples are much easier to use for explanations. Sooo ...  
 ### Example
 ```C++
     /// main.cpp (your file in which you which to use the library)
@@ -47,7 +47,7 @@ Examples are much easier to use for explanation. Sooo ...
         argparse.add_argument("--cook", "I cook", true);                // Requires --cook argument
         argparse.add_argument("-e", "--eat", "I eat", false);           // -e or --eat is optional
         argparse.add_argument("-d", "--drink", "I drink", false);       // -d or --drink is optional
-        argparse.add_argument("-c", "--chew", "I chew", true, "e");     // -c or --chew is required, if -e or --eat is given
+        argparse.add_argument("-c", "--chew", "I chew", true, {"e", "d"});     // -c or --chew is required, if -e or --eat, or -d or --drink is given
     
     
         argparse.parse(argc, argv);
@@ -114,7 +114,12 @@ Configurations and Settings can be changed before calling the `parse` function, 
     
 ```   
 
-## TODO:
+## TODO:  
+- [x] Add support for multiple parents  
+- [ ] Add doxygen comments
+- [ ] Add support for different flags beginnings: '-e' and '*e' for example
+- [ ] Add function callback support  
+- [ ] Add better depths   
 - [ ] Add support for colors  
 - [ ] Add more settings  
 - [ ] Performance improvements if possible
