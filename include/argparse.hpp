@@ -155,9 +155,31 @@ protected:
 
 
 public:
+    /// @brief Constructor knowing the description
+    /// @class Argparse
+    /// @param desc the description of the software. The description is added at the beginning of the help menu
+    ///
+    /// The purpose of this constructor is to be used to inialise the class, without parsing the arguments first.
     explicit Argparse(const std::string& desc) { configMap["description"] = desc;}
+    /// @brief Constructor without description, for parsing the argument values
+    /// @class Argparse
+    /// @param argc the number of arguments received by the program. This value is usually gotten from the main() function
+    /// @param argv the pointer of the pointers of the arguments given to the program, usally gotten from the main() function
+    ///
+    /// The purpose of this constructor is to allow to simply and directy parse the inputed values.
     Argparse(int argc, char** argv) { parse(argc, argv); }
+    /// @brief Constructor knowing the description without any argument
+    /// @class Argparse
+    /// @param desc the description of the software. The description is added at the beginning of the help menu
+    /// @param argc the number of arguments received by the program. This value is usually gotten from the main() function
+    /// @param argv the pointer of the pointers of the arguments given to the program, usally gotten from the main() function
+    ///
+    /// The purpose of this constructor is to allow the initialization of the class, knowing the descriptionm, without any
+    /// regards for the arguments.
     Argparse(const std::string& desc, int argc, char** argv) : Argparse(argc, argv) { configMap["description"] = desc;};
+    /// @brief change the base settings of the parser
+    /// @param values a list (here vector) of pairs, whereas the first denotes the setting to change and the second, the new setting
+    /// @returns (void)
     inline void settings(const std::vector<std::pair<std::string, bool>>& values)
     {
         for (const auto& value : values){
@@ -171,7 +193,7 @@ public:
     /// @brief Changes the configuration of the parser.
     /// @param values A string pair of std::string to configure. The first is the configuration to change and the second
     /// the configuration value.
-    /// @returns void
+    /// @returns (void)
     ///
     /// Currently, the following configurations can be changed: path, description and the version
     inline void configuration(const std::vector<std::pair<std::string, std::string>>& values)
@@ -188,7 +210,7 @@ public:
     /// of the inputed arguments and sets their values ready for the 'get' functions
     /// @param argc ArgumentsCount
     /// @param argv ArgumentsValues
-    /// @returns void
+    /// @returns (void)
     ///
     /// The arguments of this function are supposed to originate from the 'main' function of your project
     inline void parse(int argc, char** argv)
@@ -257,7 +279,12 @@ public:
             for (auto& arg : argsMap)
             {
                 if (!parsed.empty() && !std::get<2>(arg.second).empty() && parsed.find(arg.first) != parsed.end() &&
-                    (std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){ if (getRelMod(val).empty() or parsed.find(getRelMod(val)) == parsed.end()) {return true;} else{found = val; return false;} })))
+                    (std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(),
+                            [&](const std::string& val){
+                        if (getRelMod(val).empty() or parsed.find(getRelMod(val)) == parsed.end()) {return true;}
+                        else{found = val; return false;
+                        }
+                    })))
                 {
                     uint32_t myCounter = 0;
                     std::stringstream sss;
@@ -276,8 +303,12 @@ public:
                     error_message(sss.str());
                 }
                 if (!parsed.empty() && std::get<1>(arg.second) &&
-                    (std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){ if (getRelMod(val).empty()) {return true;} else {found = val; return false;} })||
-                     !std::none_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val) {return parsed.find(getRelMod(val)) == parsed.end();})) &&
+                    (std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(),
+                            [&](const std::string& val){
+                        if (getRelMod(val).empty()) {return true;}
+                        else {found = val; return false;}
+                    })|| !std::none_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(),
+                            [&](const std::string& val) {return parsed.find(getRelMod(val)) == parsed.end();})) &&
                      parsed.find(arg.first) == parsed.end())
                 {
                     error_message("Missing required argument: " + arg.first);
@@ -338,22 +369,39 @@ public:
     {
         return parsed.size() == 1 && parsed.find("--version") != parsed.end();
     }
+    /// @brief Used to add the arguments, or rather allowed flags for future parsing.
+    /// @param arg the name of the short flag, i.e. -a
+    /// @param long_arg the name of the long flag, i.e. --add
+    /// @param desc description of the flag for the help menu
+    /// @param required is the flag a must?
+    /// @param parents a list (here: vector) of the parents of the current flag, i.e. "{"-r", "-p"} for parents "r" and "-p"
+    /// @returns void
     inline void add_argument(const std::string& arg, const std::string& long_arg, const std::string& desc, bool required = false, const std::vector<std::string>& parents = {})
     {
         if (desc.empty())
             throw std::invalid_argument("Empty descriptions are not allowed");
         if (long_arg[0] != '-')
-            throw std::invalid_argument(R"(Simple arguments start with '-'.)");
+            throw std::invalid_argument(R"(Short flags start with '-'.)");
         if (long_arg[0] != '-' && long_arg[1] != '-')
-            throw std::invalid_argument(R"(Long arguments start with '--')");
+            throw std::invalid_argument(R"(Long flags start with '--')");
         argsRel.emplace_back(arg, long_arg);
         argsMap[long_arg] = {desc, required, parents};
     }
+    /// @brief Used to add the arguments, or rather allowed flags for future parsing.
+    /// @param long_arg the name of the long flag, i.e. --add
+    /// @param desc description of the flag for the help menu
+    /// @param required is the flag a must?
+    /// @param parents a list (here: vector) of the parents of the current flag, i.e. "{"-r", "-p"} for parents "r" and "-p"
+    /// @returns void
     inline void add_argument(const std::string& long_arg, const std::string& desc, bool required = false, const std::vector<std::string>& parents = {})
     {
         add_argument("", long_arg, desc, required, parents);
     }
-
+    /// @brief Fetch a flag's value
+    /// @param value the flag name, from which the value should be fetched from
+    /// @returns the fetched value
+    ///
+    /// if the >>> operator is not overloaded, only primitive types can be specified as template paramaters
     template <typename T>
     inline T get(const std::string& value)
     {
@@ -363,7 +411,11 @@ public:
         ss >> val;
         return val;
     }
-
+    /// @brief Fetch a vector of values from a flag
+    /// @param value the flag name, from which the values should be fetched from
+    /// @returns a vector of fetched values
+    ///
+    /// if the >>> operator is not overloaded, only primitive types can be specified as template paramaters
     template <typename T>
     inline std::vector<T> getv(const std::string& value)
     {
@@ -382,6 +434,9 @@ public:
     }
 };
 
+/// @brief checks if a flag was inputed by the user
+/// @param value the flag name to be checked for existance
+/// @returns true if the flag was parsed, else false
 template <>
 inline bool Argparse::get<bool>(const std::string& value){
     return parsed.find(getRelMod(value)) != parsed.end();

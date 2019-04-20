@@ -112,11 +112,15 @@ Configurations and Settings can be changed before calling the `parse` function, 
         {"error_msg", true}                         // Allow argeparse to throw errors
     });
     
-```   
+```  
+## Miscellaneaous  
+### Comments  
+The project supports comments. With CLion:  
+![screenshot](assets/images/screenshot_comments.png)
 
 ## TODO:  
 - [x] Add support for multiple parents  
-- [ ] Add doxygen comments
+- [x] Add doxygen comments
 - [ ] Add support for different flags beginnings: '-e' and '*e' for example
 - [ ] Add function callback support  
 - [ ] Add better depths   
