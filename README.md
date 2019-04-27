@@ -113,6 +113,22 @@ Configurations and Settings can be changed before calling the `parse` function, 
     });
     
 ```  
+## Methodes Overview  
+```C++
+    explicit Argparse(const std::string& desc)    
+    Argparse(int argc, char** argv) 
+    Argparse(const std::string& desc, int argc, char** argv)
+    inline void settings(const std::vector<std::pair<std::string, bool>>& values)
+    inline void configuration(const std::vector<std::pair<std::string, std::string>>& values)
+    inline void parse(int argc, char** argv)
+    inline void help()
+    inline bool isHelp()
+    inline bool isVersion()
+    inline void add_argument(const std::string& arg, const std::string& long_arg, const std::string& desc, bool required = false, const std::vector<std::string>& parents = {})
+    inline void add_argument(const std::string& long_arg, const std::string& desc, bool required = false, const std::vector<std::string>& parents = {})
+    template <typename T> inline T get(const std::string& value)
+    template <typename T> inline std::vector<T> getv(const std::string& value)
+```  
 ## Miscellaneaous  
 ### Comments  
 The project supports comments. With CLion:  
@@ -121,10 +137,10 @@ The project supports comments. With CLion:
 ## TODO:  
 - [x] Add support for multiple parents  
 - [x] Add doxygen comments
-- [ ] Add support for different flags beginnings: '-e' and '*e' for example
+- [ ] ~~Add support for different flags beginnings: '-e' and '*e' for example~~
 - [ ] Add function callback support  
 - [ ] Add better depths   
-- [ ] Add support for colors  
+- [ ] ~~Add support for colors~~  
 - [ ] Add more settings  
 - [ ] Performance improvements if possible
 

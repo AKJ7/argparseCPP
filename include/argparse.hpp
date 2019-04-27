@@ -275,6 +275,22 @@ public:
         }
         if (!isHelp() && !isVersion())
         {
+            auto pprintParents = [&](const std::pair<std::string, std::tuple<std::string, bool, std::vector<std::string>>>& arg) -> std::string{
+                uint32_t myCounter = 0;
+                std::stringstream sss;
+                for (const auto& fl : std::get<2>(arg.second))
+                {
+                    myCounter++;
+                    sss << getRelMod(fl);
+                    if (myCounter == std::get<2>(arg.second).size() - 1 &&  std::get<2>(arg.second).size() != 1)
+                        sss << " or ";
+                    else if (myCounter == std::get<2>(arg.second).size())
+                        break;
+                    else
+                        sss << ", ";
+                }
+                return sss.str();
+            };
             std::string found{};
             for (auto& arg : argsMap)
             {
@@ -286,32 +302,17 @@ public:
                         }
                     })))
                 {
-                    uint32_t myCounter = 0;
-                    std::stringstream sss;
-                    sss << arg.first << " requires: ";
-                    for (const auto& fl : std::get<2>(arg.second))
-                    {
-                        myCounter++;
-                        sss << getRelMod(fl);
-                        if (myCounter == std::get<2>(arg.second).size() - 1 &&  std::get<2>(arg.second).size() != 1)
-                            sss << " or ";
-                        else if (myCounter == std::get<2>(arg.second).size())
-                            break;
-                        else
-                            sss << ", ";
-                    }
-                    error_message(sss.str());
+                    error_message(arg.first + " requires: " + pprintParents(arg));
                 }
-                if (!parsed.empty() && std::get<1>(arg.second) &&
-                    (std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(),
-                            [&](const std::string& val){
-                        if (getRelMod(val).empty()) {return true;}
-                        else {found = val; return false;}
-                    })|| !std::none_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(),
-                            [&](const std::string& val) {return parsed.find(getRelMod(val)) == parsed.end();})) &&
-                     parsed.find(arg.first) == parsed.end())
+
+                if (!parsed.empty() && std::get<1>(arg.second) && std::get<2>(arg.second).empty() && parsed.find(arg.first) == parsed.end())
                 {
                     error_message("Missing required argument: " + arg.first);
+                }
+
+                if (!parsed.empty() && std::get<1>(arg.second) && (!std::get<2>(arg.second).empty() && std::none_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){ return parsed.find(arg.first) != parsed.end();})))
+                {
+                    error_message("Missing required argument: " + arg.first + ", of parents: " + pprintParents(arg));
                 }
             }
         }
