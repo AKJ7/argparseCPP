@@ -310,11 +310,10 @@ public:
                 {
                     error_message("Missing required argument: " + arg.first);
                 }
-
                 if (!parsed.empty() &&
                     std::get<1>(arg.second) &&
-                    (!std::get<2>(arg.second).empty() &&
-                    std::none_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){return !std::get<1>(argsMap[getRelMod(val)]) or parsed.find(arg.first) != parsed.end();})))
+                    !std::get<2>(arg.second).empty() &&
+                    std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){ return std::get<1>(argsMap[getRelMod(val)]) ? parsed.find(getRelMod(val)) == parsed.end() : parsed.find(arg.first) == parsed.end();}))
                 {
                     error_message("Missing required argument: " + arg.first + ", of parents: " + pprintParents(arg));
                 }
@@ -406,7 +405,7 @@ public:
     /// @param value the flag name, from which the value should be fetched from
     /// @returns the fetched value
     ///
-    /// if the >>> operator is not overloaded, only primitive types can be specified as template paramaters
+    /// if the >> operator is not overloaded, only primitive types can be specified as template paramaters
     template <typename T>
     inline T get(const std::string& value)
     {
@@ -420,7 +419,7 @@ public:
     /// @param value the flag name, from which the values should be fetched from
     /// @returns a vector of fetched values
     ///
-    /// if the >>> operator is not overloaded, only primitive types can be specified as template paramaters
+    /// if the >> operator is not overloaded, only primitive types can be specified as template paramaters
     template <typename T>
     inline std::vector<T> getv(const std::string& value)
     {
@@ -428,13 +427,7 @@ public:
         ss << parsed[getRelMod(value)];
         std::vector<T> dump;
         T toResend;
-        while (!ss.eof())
-        {
-            ss >> toResend;
-            if (ss.peek() == std::char_traits<char>::eof())
-                break;
-            dump.emplace_back(toResend);
-        }
+        std::for_each(std::istream_iterator<T>(ss), std::istream_iterator<T>(), [&](T value){ dump.emplace_back(value);});
         return dump;
     }
 };

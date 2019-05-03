@@ -8,8 +8,8 @@ int main(int argc, char** argv) {
     Argparse argparse("TestProgram v1.0.0");
 
     argparse.add_argument("--cook", "I cook", true);                // Requires --cook argument
-    argparse.add_argument("-e", "--eat", "I eat", false);           // -e or --eat is optional
-    argparse.add_argument("-d", "--drink", "I drink", true);       // -d or --drink is optional
+    argparse.add_argument("-e", "--eat", "I eat", true);           // -e or --eat is optional
+    argparse.add_argument("-d", "--drink", "I drink", false);       // -d or --drink is optional
     argparse.add_argument("-c", "--chew", "I chew", true, {"e", "d"});     // -c or --chew is required, if -e or --eat or -d or --drink is given
 
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     for (const auto& food : foods)
         std::cout << food << ' ';                          // outputs: pie, fish, rice
     if (!foods.empty()) std::cout << '\n';
-    auto numberofChews = argparse.get<int>("c");
+    auto numberofChews = argparse.getv<int>("c");
     std::cout << numberofChews << '\n';                // outputs: 10
 
     bool drank = argparse.get<bool>("d");
