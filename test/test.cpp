@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     for (const auto& food : foods)
         std::cout << food << ' ';                          // outputs: pie, fish, rice
     if (!foods.empty()) std::cout << '\n';
-    auto numberofChews = argparse.getv<int>("c");
+    auto numberofChews = argparse.get<int>("c");
     std::cout << numberofChews << '\n';                // outputs: 10
 
     bool drank = argparse.get<bool>("d");
