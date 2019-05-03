@@ -294,9 +294,10 @@ public:
             std::string found{};
             for (auto& arg : argsMap)
             {
-                if (!parsed.empty() && !std::get<2>(arg.second).empty() && parsed.find(arg.first) != parsed.end() &&
-                    (std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(),
-                            [&](const std::string& val){
+                if (!parsed.empty() &&
+                    !std::get<2>(arg.second).empty() &&
+                    parsed.find(arg.first) != parsed.end() &&
+                    (std::all_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){
                         if (getRelMod(val).empty() or parsed.find(getRelMod(val)) == parsed.end()) {return true;}
                         else{found = val; return false;
                         }
@@ -310,7 +311,10 @@ public:
                     error_message("Missing required argument: " + arg.first);
                 }
 
-                if (!parsed.empty() && std::get<1>(arg.second) && (!std::get<2>(arg.second).empty() && std::none_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){ return parsed.find(arg.first) != parsed.end();})))
+                if (!parsed.empty() &&
+                    std::get<1>(arg.second) &&
+                    (!std::get<2>(arg.second).empty() &&
+                    std::none_of(std::get<2>(arg.second).begin(), std::get<2>(arg.second).end(), [&](const std::string& val){return !std::get<1>(argsMap[getRelMod(val)]) or parsed.find(arg.first) != parsed.end();})))
                 {
                     error_message("Missing required argument: " + arg.first + ", of parents: " + pprintParents(arg));
                 }

@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
 
     argparse.add_argument("--cook", "I cook", true);                // Requires --cook argument
     argparse.add_argument("-e", "--eat", "I eat", false);           // -e or --eat is optional
-    argparse.add_argument("-d", "--drink", "I drink", false);       // -d or --drink is optional
+    argparse.add_argument("-d", "--drink", "I drink", true);       // -d or --drink is optional
     argparse.add_argument("-c", "--chew", "I chew", true, {"e", "d"});     // -c or --chew is required, if -e or --eat or -d or --drink is given
 
 
