@@ -140,7 +140,7 @@ The project supports comments. With CLion:
 - [x] Add doxygen comments
 - [ ] ~~Add support for different flags beginnings: '-e' and '*e' for example~~
 - [ ] Add function callback support  
-- [ ] Add better depths   
+- [ ] ~~Add better depths~~   
 - [ ] ~~Add support for colors~~  
 - [ ] Add more settings  
 - [ ] Performance improvements if possible
