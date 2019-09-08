@@ -1,5 +1,5 @@
-# ARGPARSE CPP  
 [![Build Status](https://travis-ci.org/AKJ7/argparseCPP.svg?branch=master)](https://travis-ci.org/AKJ7/argparseCPP)  
+# ARGPARSE CPP  
 An argument parser for CPP in CPP.  
 ## Introduction  
 ArgparseCPP is a small header file to allow parsing and reading command inputs from a terminal.  
