@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 
 option(ENABLE_EXAMPLE "Enable Example" ON)
 option(ENABLE_TEST "Enable Testing" ON)
@@ -6,7 +6,6 @@ option(ENABLE_TEST "Enable Testing" ON)
 project(argparseCPP
         VERSION 1.0.0
         DESCRIPTION "Argument Parser written in C++ 11"
-        HOMEPAGE_URL "https://github.com/AKJ7/argparseCPP"
         LANGUAGES CXX
 )
 set(CMAKE_CXX_STANDARD 11)
