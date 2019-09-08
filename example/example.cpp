@@ -1,5 +1,6 @@
 #include <iostream>
-#include "include/argparse.hpp"
+#include "argparse.hpp"
+
 
 int main(int argc, char** argv) {
 
@@ -12,7 +13,6 @@ int main(int argc, char** argv) {
     argparse.add_argument("-d", "--drink", "I drink", false);       // -d or --drink is optional
     argparse.add_argument("-c", "--chew", "I chew", true, {"e", "d"});     // -c or --chew is required, if -e or --eat or -d or --drink is given
 
-
     argparse.parse(argc, argv);
 
     // Prints help if no parameter was given or if -h or --help is received as argument
@@ -24,22 +24,22 @@ int main(int argc, char** argv) {
 
     if (argparse.isVersion())
     {
-        std::cout << "v1.0.0" << std::endl;
+        std::clog << "v1.0.0" << std::endl;
         return 0;
     }
 
     std::string dish = argparse.get<std::string>("cook");
-    std::cout << dish << '\n';                             // outputs: rice
+    std::clog << dish << '\n';                             // outputs: rice
 
     auto foods = argparse.getv<std::string>("e");           // required -c (or --chew) arguments
     for (const auto& food : foods)
-        std::cout << food << ' ';                          // outputs: pie, fish, rice
-    if (!foods.empty()) std::cout << '\n';
+        std::clog << food << ' ';                          // outputs: pie, fish, rice
+    if (!foods.empty()) std::clog << '\n';
     auto numberofChews = argparse.get<int>("c");
-    std::cout << numberofChews << '\n';                // outputs: 10
+    std::clog << numberofChews << '\n';                // outputs: 10
 
     bool drank = argparse.get<bool>("d");
-    std::cout << (drank ? "I drank" : "I didn't drink") << std::endl;   // outputs: I drank
+    std::clog << (drank ? "I drank" : "I didn't drink") << std::endl;   // outputs: I drank
 
     return EXIT_SUCCESS;
 }
