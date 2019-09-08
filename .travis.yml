@@ -26,24 +26,24 @@ matrix:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
     -os: linux
-      - addons:
+      addons:
            apt:
              sources:
                - ubuntu-toolchain-r-test
              packages:
                - g++-8
-     env:
+      env:
        - MATRIX_EVL="CC=gcc-8 && CXX=g++-8"
 
     -os: linux
-           - addons:
-           apt:
-             sources:
-               - ubuntu-toolchain-r-test
-             packages:
-               - g++-9
-           env:
-             - MATRIX_EVL="CC=gcc-9 && CXX=g++-9"
+      addons:
+         apt:
+           sources:
+             - ubuntu-toolchain-r-test
+           packages:
+             - g++-9
+         env:
+           - MATRIX_EVL="CC=gcc-9 && CXX=g++-9"
 
 before_install:
   - eval "${MATRIX_EVAL}"
