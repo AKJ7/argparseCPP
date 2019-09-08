@@ -9,4 +9,4 @@ script:
   - mkdir build
   - cmake . -Bbuild -DCMAKE_BUILD_TYPE=Release
   - make -C build
-  - ./bin/unitTest
+  - pwd
